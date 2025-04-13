@@ -167,6 +167,25 @@ app.put('/users/skills/:id', async (req, res) => {
   }
 });
 
+// 削除 - DELETE /users/skills/:id
+app.delete('/users/skills/:id', async (req, res) => {
+  try {
+    const [result] = await pool.query(
+      'DELETE FROM UserSkills WHERE id = ?',
+      [req.params.id]
+    );
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'ユーザースキルが見つかりません' });
+    }
+    
+    res.status(204).end();
+  } catch (error) {
+    console.error('予期せぬエラー:', error);
+    return res.status(500).json({ error: '予期せぬエラーが発生しました。システム管理者に問い合わせてください。' });
+  }
+});
+
 app.listen(3000, async() => {
     console.log('Server is running on port 3000');
     // データベース接続確認
