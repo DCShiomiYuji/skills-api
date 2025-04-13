@@ -108,6 +108,34 @@ app.get('/users/skills/:id', async(req, res) => {
     }
 });
 
+// 新規作成 - POST /users/skills
+app.post('/users/skills', async (req, res) => {
+    try {
+        const { userId, skillId, level, experience } = req.body;
+      
+        // バリデーション
+        if (!userId || skillId === undefined || level === undefined || experience === undefined) {
+            return res.status(400).json({ error: 'userId, skillId, level, experience は必須です' });
+        }
+      
+        await pool.query(
+            'INSERT INTO UserSkills (user_id, skill_id, level, experience) VALUES (?, ?, ?, ?)',
+            [userId, skillId, level, experience]
+        );
+      
+        res.status(201).json({
+            userId,
+            skillId,
+            level,
+            experience
+        });
+    } catch (error) {
+        console.error('予期せぬエラー:', error);
+        return res.status(500).json({ error: '予期せぬエラーが発生しました。システム管理者に問い合わせてください。' });
+    }
+});
+
+
 // 更新 - PUT /users/skills/:id
 app.put('/users/skills/:id', async (req, res) => {
   try {
