@@ -25,47 +25,37 @@ async function testConnection() {
   }
 }
 
-
-
-// ここにサンプルデータを定義します
-const skills = [
-    {
-        "id": "000001",
-        "skill": "HTML",
-        "level": 3,
-        "experience": 1
-      },
-      {
-        "id": "000002",
-        "skill": "javascript",
-        "level": 5,
-        "experience": 2
-      }
-]
-
 // ここに API のルートを追加します
 
-// 一覧取得 - GET /skills
-app.get('/skills', (req, res) => {
+// 一覧取得 - GET /users/skills
+app.get('/users/skills', async (req, res) => {
     const exp = req.query.exp;
-  
-    // expクエリパラメータが指定されている場合、フィルタリングする
-    if (exp !== undefined) {
-      const expValue = parseInt(exp);
-      
-      // 数値に変換できない場合はエラー
-      if (isNaN(expValue)) {
-        return res.status(400).json({ error: '経験年数 exp は数値で指定してください' });
+    let query = 'SELECT * FROM UserSkills';
+    let params = [];
+
+    try {
+      // expクエリパラメータが指定されている場合、フィルタリングする
+      if (exp !== undefined) {
+        const expValue = parseInt(exp);
+        
+        // 数値に変換できない場合はエラー
+        if (isNaN(expValue)) {
+          return res.status(400).json({ error: '経験年数 exp は数値で指定してください' });
+        }
+        
+        // 指定された経験年数以上のスキルをフィルタリング
+        query = 'SELECT * FROM UserSkills WHERE experience >= ?';
+        params = [expValue];
       }
-      
-      // 指定された経験年数以上のスキルをフィルタリング
-      const filteredSkills = skills.filter(skill => skill.experience >= expValue);
-      return res.status(200).json(filteredSkills);
 
-    }
+      // クエリパラメータがない場合は全件返す
+      const [skills] = await pool.query(query, params);
+      res.status(200).json(skills);
 
-    // クエリパラメータがない場合は全件返す
-    res.status(200).json(skills);
+   } catch (error) {
+      console.error('予期せぬエラー:', error);
+      return res.status(500).json({ error: '予期せぬエラーが発生しました。システム管理者に問い合わせてください。' });
+   }
 });
 
 // 1件取得 - GET /skills/:id
