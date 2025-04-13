@@ -2,6 +2,8 @@ const express = require('express');
 const app = express();
 const mysql = require('mysql2/promise');
 
+app.use(express.json()); // リクエストBodyを取得するために必要
+
 // MySQL 接続設定
 const dbConfig = {
   host: 'localhost',
@@ -85,8 +87,6 @@ app.get('/users/skills', async (req, res) => {
    }
 });
 
-
-
 // 1件取得 - GET /skills/:id
 app.get('/users/skills/:id', async(req, res) => {
     try {
@@ -98,7 +98,7 @@ app.get('/users/skills/:id', async(req, res) => {
         const userSkill = rows[0]; // 取得したスキル情報
 
         if (!userSkill) {
-            return res.status(404).json({ error: 'スキルが見つかりません' });
+            return res.status(404).json({ error: 'ユーザースキルが見つかりません' });
         }
 
         return res.status(200).json(userSkill);
@@ -106,6 +106,37 @@ app.get('/users/skills/:id', async(req, res) => {
         console.error('予期せぬエラー:', error);
         return res.status(500).json({ error: '予期せぬエラーが発生しました。システム管理者に問い合わせてください。' });
     }
+});
+
+// 更新 - PUT /users/skills/:id
+app.put('/users/skills/:id', async (req, res) => {
+  try {
+    const { level, experience } = req.body;
+    const id = req.params.id;
+    
+    // バリデーション
+    if ( level === undefined || experience === undefined) {
+      return res.status(400).json({ error: 'level, experience は必須です' });
+    }
+    
+    const [result] = await pool.query(
+      'UPDATE UserSkills SET level = ?, experience = ? WHERE id = ?',
+      [level, experience, id]
+    );
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'ユーザースキルが見つかりません' });
+    }
+    
+    res.status(200).json({
+      id,
+      level,
+      experience
+    });
+  } catch (err) {
+    console.error('エラー:', err);
+    res.status(500).json({ error: 'サーバーエラーが発生しました' });
+  }
 });
 
 app.listen(3000, async() => {
